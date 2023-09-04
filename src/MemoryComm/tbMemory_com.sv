@@ -35,10 +35,26 @@ memory_com memcom (
     .MemWrite (MemWrite)
 );
 
+// UART to test reception
+logic send_start;
+logic [31:0] send_data;
+logic send_ready;
+
+word_32bit_uart_tx uart_tx(
+    .clk        ( clk ),
+    .reset      ( reset ),
+    .addr_query ( send_start ),
+    .addr       ( send_data),
+    .tx         (rx),
+    .word_send  (send_ready)
+    );
+
 assign writeData = 32'b01;
 assign address = 32'b11;
 assign SizeLoad = 3'b100;
 assign MemWrite = 2'b10;
+
+assign send_data = 32'h04_03_02_01;
 
 // Clock.
 always begin
@@ -50,9 +66,9 @@ end
 
 initial begin
     // Initial Values.
-    rx = 1'b1;
     write_enable = 1'b0;
     read_enable = 1'b0;
+    send_start = 1'b0;
 
     // Reset.
     reset = 1'b1;
@@ -74,30 +90,14 @@ initial begin
     read_enable = 1'b0;
     #60000;
 
-    rx = 1'b0;
-    #300;
-    rx = 1'b1;
-    #3000;
-
-    rx = 1'b0;
-    #300;
-    rx = 1'b1;
-    #3000;
-
-    rx = 1'b0;
-    #300;
-    rx = 1'b1;
-    #3000;
-
-    rx = 1'b0;
-    #300;
-    rx = 1'b1;
-    #3000;
+    send_start = 1'b1;
+    #100000;
 
     // Back to Initial Values.
-    rx = 1'b1;
     write_enable = 1'b0;
     read_enable = 1'b0;
+    send_start = 1'b0;
+
     $finish;
 end
 

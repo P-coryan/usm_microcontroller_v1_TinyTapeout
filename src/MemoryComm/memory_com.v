@@ -96,29 +96,19 @@ always @(*) begin
             if( write_enable || read_enable ) next_state = SEND_ADDRESS;
             else next_state = IDLE;
         end
+
         SEND_ADDRESS: begin
             send_start = 1;
             send_data = address;
-            next_state = WAIT_ADDRESS;
-        end
-
-        WAIT_ADDRESS: begin
-            send_start = 0;
-            send_data = address;
             if( send_ready && write_enable ) next_state = SEND_MEMWRITE;
             else if ( send_ready && read_enable ) next_state = SEND_SIZELOAD;
-            else next_state = WAIT_ADDRESS;
+            else next_state = SEND_ADDRESS;
         end
         SEND_SIZELOAD: begin
             send_start = 1;
             send_data = {29'b0, SizeLoad};
-            next_state = WAIT_SIZELOAD;
-        end
-        WAIT_SIZELOAD: begin
-            send_start = 0;
-            send_data = {29'b0, SizeLoad};
             if( send_ready ) next_state = WAIT_RECV_DATA;
-            else next_state = WAIT_SIZELOAD;
+            else next_state = SEND_SIZELOAD;
         end
         WAIT_RECV_DATA: begin
             if( recv_ready ) next_state = RECV_DATA;
@@ -131,24 +121,14 @@ always @(*) begin
         SEND_MEMWRITE: begin
             send_start = 1;
             send_data = {30'b0, MemWrite};
-            next_state = WAIT_MEMWRITE;
-        end
-        WAIT_MEMWRITE: begin
-            send_start = 0;
-            send_data = {30'b0, MemWrite};
             if( send_ready ) next_state = SEND_DATA;
-            else next_state = WAIT_MEMWRITE;
+            else next_state = SEND_MEMWRITE;
         end
         SEND_DATA: begin
             send_start = 1;
             send_data = writeData;
-            next_state = WAIT_DATA;
-        end
-        WAIT_DATA: begin
-            send_start = 0;
-            send_data = writeData;
             if( send_ready ) next_state = DONE;
-            else next_state = WAIT_DATA;
+            else next_state = SEND_DATA;
         end
         DONE: begin
             mem_done = 1;
