@@ -14,9 +14,9 @@ logic read_enable;
 logic mem_done;
 
 // CPU Data
-logic [31:0] writeData;
-logic [31:0] readData;
-logic [31:0] address;
+logic [7:0] writeData;
+logic [7:0] readData;
+logic [7:0] address;
 logic [2:0]  SizeLoad;
 logic [1:0]  MemWrite;
 
@@ -37,24 +37,24 @@ memory_com memcom (
 
 // UART to test reception
 logic send_start;
-logic [31:0] send_data;
+logic [7:0] send_data;
 logic send_ready;
 
-word_32bit_uart_tx uart_tx(
+uart_sm_tx uart_tx(
     .clk        ( clk ),
     .reset      ( reset ),
-    .addr_query ( send_start ),
-    .addr       ( send_data),
+    .send_pulse ( send_start ),
+    .byte_in    ( send_data),
     .tx         (rx),
-    .word_send  (send_ready)
+    .byte_end   (send_ready)
     );
 
-assign writeData = 32'b01;
-assign address = 32'b11;
+assign writeData = 8'b01;
+assign address = 8'b11;
 assign SizeLoad = 3'b100;
 assign MemWrite = 2'b10;
 
-assign send_data = 32'h04_03_02_01;
+assign send_data = 8'b1010_1010;
 
 // Clock.
 always begin
@@ -79,19 +79,21 @@ initial begin
     // Write.
     write_enable = 1'b1;
 
-    #30000;
+    #10000;
     write_enable = 1'b0;
-    #60000;
+    #30000;
 
     // Read.
     read_enable = 1'b1;
-    #30000;
+    #10000;
 
     read_enable = 1'b0;
-    #60000;
+    #20000;
 
     send_start = 1'b1;
-    #100000;
+    #20;
+    send_start = 1'b0;
+    #15000;
 
     // Back to Initial Values.
     write_enable = 1'b0;

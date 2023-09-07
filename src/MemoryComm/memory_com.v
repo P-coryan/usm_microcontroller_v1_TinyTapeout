@@ -13,28 +13,24 @@ module memory_com (
     output reg  mem_done,
 
     // CPU Data
-    input  wire [31:0] writeData,
-    output reg  [31:0] readData,
-    input  wire [31:0] address,
+    input  wire [7:0] writeData,
+    output reg  [7:0] readData,
+    input  wire [7:0] address,
     input  wire [2:0]  SizeLoad,
     input  wire [1:0]  MemWrite
 );
 
 // FSM States
-localparam  IDLE = 4'b0000,
-            SEND_ADDRESS = 4'b0001,
-            SEND_SIZELOAD = 4'b0010,
-            WAIT_RECV_DATA = 4'b0011,
-            RECV_DATA = 4'b0100,
-            SEND_MEMWRITE = 4'b0101,
-            SEND_DATA = 4'b0110,
-            DONE = 4'b0111,
-            WAIT_ADDRESS = 4'b1000,
-            WAIT_SIZELOAD = 4'b1001,
-            WAIT_MEMWRITE = 4'b1010,
-            WAIT_DATA = 4'b1011;
+localparam  IDLE = 3'b000,
+            SEND_ADDRESS = 3'b001,
+            SEND_SIZELOAD = 3'b010,
+            WAIT_RECV_DATA = 3'b011,
+            RECV_DATA = 3'b100,
+            SEND_MEMWRITE = 3'b101,
+            SEND_DATA = 3'b110,
+            DONE = 3'b111;
 
-reg [3:0] state , next_state ;  
+reg [2:0] state , next_state ;  
 
 always @(posedge clk) begin
     if(reset) begin
@@ -46,31 +42,31 @@ always @(posedge clk) begin
 end
 
 // UART Instances
-reg [31:0] recv_data;
+reg [7:0] recv_data;
 reg        recv_ready;
 reg        send_start;
-reg [31:0] send_data;
+reg [7:0] send_data;
 reg        send_ready;
 
-word_32_bit_uart_rx uart_rx (
+uart_sm_rx uart_rx (
     .clk      ( clk ),
     .reset    ( reset ),
     .rx       ( rx ),
-    .instr    ( recv_data ),
-    .word_end ( recv_ready )
+    .byte_out ( recv_data ),
+    .byte_end ( recv_ready )
 );
 
-word_32bit_uart_tx uart_tx(
+uart_sm_tx uart_tx(
     .clk        ( clk ),
     .reset      ( reset ),
-    .addr_query ( send_start ),
-    .addr       ( send_data),
+    .send_pulse ( send_start ),
+    .byte_in       ( send_data),
     .tx         (tx),
-    .word_send  (send_ready)
+    .byte_end  (send_ready)
     );
 
 
-reg [31:0] readData_prev;
+reg [7:0] readData_prev;
 always @(posedge clk) begin
     if(reset) begin
         readData_prev <= 'b0;
